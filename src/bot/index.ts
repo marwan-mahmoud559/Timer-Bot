@@ -11,13 +11,13 @@ import {
   type Interaction,
   type TextBasedChannel,
 } from "discord.js";
-import { logger } from "../lib/logger";
+import { logger } from "../lib/logger.js";
 import {
   startTimer,
   stopTimer,
   shutdownAllTimers,
   findTimerByUser,
-} from "./timerManager";
+} from "./timerManager.js";
 
 const COMMAND_TIMER = "timer";
 const COMMAND_STOP = "break";

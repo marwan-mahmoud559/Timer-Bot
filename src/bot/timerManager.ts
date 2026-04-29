@@ -9,8 +9,8 @@ import {
   type APIEmbed,
   ChannelType,
 } from "discord.js";
-import { renderTimerImage } from "./timerImage";
-import { logger } from "../lib/logger";
+import { renderTimerImage } from "./timerImage.js";
+import { logger } from "../lib/logger.js";
 
 const UPDATE_INTERVAL_MS = 30_000;
 
