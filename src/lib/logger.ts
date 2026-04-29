@@ -1,25 +1,30 @@
 type LogObj = Record<string, unknown>;
 
-function fmt(level: string, objOrMsg: unknown, maybeMsg?: string) {
-  const ts = new Date().toISOString();
-  if (typeof objOrMsg === "string") {
-    console.log(`[${ts}] ${level}: ${objOrMsg}`);
-  } else {
-    const msg = maybeMsg ?? "";
-    try {
-      console.log(`[${ts}] ${level}: ${msg} ${JSON.stringify(objOrMsg)}`);
-    } catch {
-      console.log(`[${ts}] ${level}: ${msg}`);
-    }
+function fmt(level: string, obj: LogObj | string, msg?: string): string {
+  if (typeof obj === "string") {
+    return `[${new Date().toISOString()}] ${level} ${obj}`;
   }
+  const message = msg ?? "";
+  let extra = "";
+  try {
+    extra = Object.keys(obj).length ? " " + JSON.stringify(obj) : "";
+  } catch {
+    extra = "";
+  }
+  return `[${new Date().toISOString()}] ${level} ${message}${extra}`;
 }
 
 export const logger = {
-  info: (objOrMsg: unknown, msg?: string) => fmt("INFO", objOrMsg, msg),
-  warn: (objOrMsg: unknown, msg?: string) => fmt("WARN", objOrMsg, msg),
-  error: (objOrMsg: unknown, msg?: string) => fmt("ERROR", objOrMsg, msg),
-  debug: (objOrMsg: unknown, msg?: string) => fmt("DEBUG", objOrMsg, msg),
+  info(obj: LogObj | string, msg?: string): void {
+    console.log(fmt("INFO ", obj, msg));
+  },
+  warn(obj: LogObj | string, msg?: string): void {
+    console.warn(fmt("WARN ", obj, msg));
+  },
+  error(obj: LogObj | string, msg?: string): void {
+    console.error(fmt("ERROR", obj, msg));
+  },
+  debug(obj: LogObj | string, msg?: string): void {
+    console.log(fmt("DEBUG", obj, msg));
+  },
 };
-
-export type Logger = typeof logger;
-export type _LogObj = LogObj;

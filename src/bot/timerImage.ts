@@ -1,7 +1,33 @@
 import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
+import path from "node:path";
+import fs from "node:fs";
 
 const WIDTH = 800;
 const HEIGHT = 360;
+
+const FONT_FAMILY = "TimerSans";
+let fontRegistered = false;
+
+function ensureFontRegistered(): void {
+  if (fontRegistered) return;
+  const candidates = [
+    path.join(process.cwd(), "fonts", "DejaVuSans-Bold.ttf"),
+    path.join(process.cwd(), "dist", "fonts", "DejaVuSans-Bold.ttf"),
+  ];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) {
+        GlobalFonts.registerFromPath(p, FONT_FAMILY);
+        fontRegistered = true;
+        return;
+      }
+    } catch {
+      /* try next */
+    }
+  }
+  // Fall back silently to system sans-serif if font file missing.
+  fontRegistered = true;
+}
 
 function formatTime(totalSeconds: number): string {
   const safe = Math.max(0, Math.floor(totalSeconds));
@@ -21,6 +47,8 @@ export interface TimerImageOptions {
 }
 
 export function renderTimerImage(opts: TimerImageOptions): Buffer {
+  ensureFontRegistered();
+
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext("2d");
 
@@ -28,16 +56,15 @@ export function renderTimerImage(opts: TimerImageOptions): Buffer {
   const accent = isBreak ? "#22d3ee" : "#ff2bd6";
   const accentSoft = isBreak ? "#06b6d4" : "#a21caf";
 
-  // background gradient
   const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
   bg.addColorStop(0, "#08020c");
   bg.addColorStop(1, "#1a0a1f");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  // decorative spirograph-like ellipses
   const cx = WIDTH / 2;
   const cy = HEIGHT / 2;
+
   ctx.save();
   ctx.translate(cx, cy);
   ctx.strokeStyle = accentSoft;
@@ -53,7 +80,6 @@ export function renderTimerImage(opts: TimerImageOptions): Buffer {
   }
   ctx.restore();
 
-  // soft outer glow
   ctx.save();
   ctx.globalAlpha = 0.18;
   const glow = ctx.createRadialGradient(cx, cy, 40, cx, cy, 420);
@@ -63,39 +89,35 @@ export function renderTimerImage(opts: TimerImageOptions): Buffer {
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   ctx.restore();
 
-  // small "TIMER" label
   ctx.save();
   ctx.fillStyle = accent;
   ctx.shadowColor = accent;
   ctx.shadowBlur = 18;
-  ctx.font = "bold 30px sans-serif";
+  ctx.font = `bold 30px "${FONT_FAMILY}", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText("TIMER", cx, 60);
   ctx.restore();
 
-  // main time text
   const timeText = formatTime(opts.remainingSeconds);
   ctx.save();
   ctx.fillStyle = accent;
   ctx.shadowColor = accent;
   ctx.shadowBlur = 35;
-  ctx.font = "bold 140px sans-serif";
+  ctx.font = `bold 140px "${FONT_FAMILY}", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(timeText, cx, cy + 10);
-  // re-stroke for crisper edges over glow
   ctx.shadowBlur = 0;
   ctx.fillStyle = "#ffffff";
   ctx.globalAlpha = 0.18;
   ctx.fillText(timeText, cx, cy + 10);
   ctx.restore();
 
-  // phase label at bottom
   ctx.save();
   ctx.fillStyle = "#f5d0fe";
   ctx.globalAlpha = 0.85;
-  ctx.font = "600 22px sans-serif";
+  ctx.font = `bold 22px "${FONT_FAMILY}", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(isBreak ? "BREAK TIME" : "FOCUS TIME", cx, HEIGHT - 36);
@@ -103,6 +125,3 @@ export function renderTimerImage(opts: TimerImageOptions): Buffer {
 
   return canvas.toBuffer("image/png");
 }
-
-// Touch GlobalFonts to keep import (no-op; fallback to system sans-serif)
-void GlobalFonts;

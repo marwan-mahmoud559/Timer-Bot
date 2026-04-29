@@ -130,20 +130,30 @@ async function handleInteraction(interaction: Interaction): Promise<void> {
         });
         return;
       }
-      const result = await startTimer({
+      // Respond instantly so the user doesn't see a long "thinking" spinner.
+      await interaction.editReply({
+        content: `✅ بدأ التايمر — مذاكرة **${studyMinutes} دقيقة** ثم بريك **${breakMinutes} دقيقة**.`,
+      });
+
+      // Heavy work (image render + channel.send) runs in the background.
+      startTimer({
         channel,
         userId: interaction.user.id,
         studyMinutes,
         breakMinutes,
-      });
-
-      if (result.ok) {
-        await interaction.editReply({
-          content: `✅ بدأ التايمر — مذاكرة **${studyMinutes} دقيقة** ثم بريك **${breakMinutes} دقيقة**.`,
+      })
+        .then(async (result) => {
+          if (!result.ok) {
+            try {
+              await interaction.editReply({ content: `❌ ${result.reason}` });
+            } catch {
+              /* noop */
+            }
+          }
+        })
+        .catch((err) => {
+          logger.error({ err }, "startTimer failed");
         });
-      } else {
-        await interaction.editReply({ content: `❌ ${result.reason}` });
-      }
       return;
     }
 
