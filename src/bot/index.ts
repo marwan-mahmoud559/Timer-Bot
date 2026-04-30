@@ -24,6 +24,19 @@ const COMMAND_STOP = "break";
 
 const OPT_STUDY = "study_minutes";
 const OPT_BREAK = "break_minutes";
+const OPT_STYLE = "style";
+
+const STYLE_CHOICES = [
+  { name: "Random colors (default)", value: "random" },
+  { name: "Hello Kitty 🎀", value: "hellokitty" },
+  { name: "Chromie ⚙ (chrome)", value: "chromie" },
+] as const;
+
+type StyleValue = (typeof STYLE_CHOICES)[number]["value"];
+
+function isStyleValue(v: string | null): v is StyleValue {
+  return v === "random" || v === "hellokitty" || v === "chromie";
+}
 
 function buildCommands() {
   const timer = new SlashCommandBuilder()
@@ -44,6 +57,13 @@ function buildCommands() {
         .setRequired(true)
         .setMinValue(1)
         .setMaxValue(1440),
+    )
+    .addStringOption((o) =>
+      o
+        .setName(OPT_STYLE)
+        .setDescription("شكل صورة التايمر")
+        .setRequired(false)
+        .addChoices(...STYLE_CHOICES),
     );
 
   const stop = new SlashCommandBuilder()
@@ -96,6 +116,8 @@ async function handleInteraction(interaction: Interaction): Promise<void> {
     if (interaction.commandName === COMMAND_TIMER) {
       const studyMinutes = interaction.options.getInteger(OPT_STUDY, true);
       const breakMinutes = interaction.options.getInteger(OPT_BREAK, true);
+      const styleRaw = interaction.options.getString(OPT_STYLE, false);
+      const style = isStyleValue(styleRaw) ? styleRaw : "random";
 
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
@@ -135,6 +157,7 @@ async function handleInteraction(interaction: Interaction): Promise<void> {
         userId: interaction.user.id,
         studyMinutes,
         breakMinutes,
+        style,
       });
 
       if (result.ok) {

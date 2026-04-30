@@ -9,11 +9,15 @@ import {
   type APIEmbed,
   ChannelType,
 } from "discord.js";
-import { renderTimerImage } from "./timerImage.js";
+import {
+  renderTimerImage,
+  RANDOM_PALETTE,
+  type TimerStyle,
+} from "./timerImage.js";
 import { logger } from "../lib/logger.js";
 
 const UPDATE_INTERVAL_MS = 30_000;
-const REPOST_INTERVAL_MS = 5 * 60 * 1000; // recreate message every 5 minutes
+const REPOST_INTERVAL_MS = 5 * 60 * 1000;
 
 type Phase = "study" | "break";
 
@@ -28,13 +32,14 @@ interface ActiveTimer {
   message: Message;
   interval: NodeJS.Timeout;
   lastRepostAt: number;
+  style: TimerStyle;
+  paletteIndex: number;
 }
 
 const active = new Map<string, ActiveTimer>();
 
 function formatRemaining(seconds: number): string {
   const raw = Math.max(0, Math.floor(seconds));
-  // Snap displayed seconds to multiples of 30.
   const safe = Math.floor(raw / 30) * 30;
   const m = Math.floor(safe / 60);
   const s = safe % 60;
@@ -46,10 +51,18 @@ function formatRemaining(seconds: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+function styleColor(t: ActiveTimer): number {
+  if (t.phase === "break") return 0x22d3ee;
+  if (t.style === "hellokitty") return 0xff5da8;
+  if (t.style === "chromie") return 0x9aa4b2;
+  // random
+  const hex = RANDOM_PALETTE[t.paletteIndex % RANDOM_PALETTE.length]!.accent;
+  return parseInt(hex.slice(1), 16);
+}
+
 function buildEmbed(t: ActiveTimer, remainingSeconds: number): APIEmbed {
   const isBreak = t.phase === "break";
   const title = isBreak ? "☕ وقت البريك" : "📚 Focus Study Session";
-  const color = isBreak ? 0x22d3ee : 0xff2bd6;
 
   const description = [
     `📖 مدة المذاكرة: **${t.studyMinutes} دقيقة**`,
@@ -62,7 +75,7 @@ function buildEmbed(t: ActiveTimer, remainingSeconds: number): APIEmbed {
   return new EmbedBuilder()
     .setTitle(title)
     .setDescription(description)
-    .setColor(color)
+    .setColor(styleColor(t))
     .setImage("attachment://timer.png")
     .setTimestamp(new Date())
     .toJSON();
@@ -81,6 +94,8 @@ function buildAttachment(t: ActiveTimer, remainingSeconds: number): AttachmentBu
   const buf = renderTimerImage({
     remainingSeconds,
     phase: t.phase,
+    style: t.style,
+    paletteIndex: t.paletteIndex,
   });
   return new AttachmentBuilder(buf, { name: "timer.png" });
 }
@@ -89,11 +104,14 @@ async function repostMessage(t: ActiveTimer, remainingSeconds: number): Promise<
   const channel = t.message.channel;
   if (!channel.isSendable()) return;
 
+  // Rotate palette for "random" style on each repost so colors keep changing.
+  if (t.style === "random") {
+    t.paletteIndex = (t.paletteIndex + 1) % RANDOM_PALETTE.length;
+  }
+
   const attachment = buildAttachment(t, remainingSeconds);
   const embed = buildEmbed(t, remainingSeconds);
 
-  // Send the new message FIRST (so we never end up with no visible timer
-  // if delete succeeds but send fails).
   const newMessage = await channel.send({
     embeds: [embed],
     files: [attachment],
@@ -104,7 +122,6 @@ async function repostMessage(t: ActiveTimer, remainingSeconds: number): Promise<
   t.message = newMessage;
   t.lastRepostAt = Date.now();
 
-  // Best-effort delete of the old message.
   try {
     await oldMessage.delete();
   } catch (err) {
@@ -136,7 +153,6 @@ async function tick(channelId: string): Promise<void> {
         logger.error({ err }, "Failed to send phase change message");
       }
 
-      // Force a fresh message at phase change.
       try {
         await repostMessage(t, remainingSeconds);
       } catch (err) {
@@ -187,8 +203,9 @@ export async function startTimer(opts: {
   userId: string;
   studyMinutes: number;
   breakMinutes: number;
+  style: TimerStyle;
 }): Promise<{ ok: true } | { ok: false; reason: string }> {
-  const { channel, userId, studyMinutes, breakMinutes } = opts;
+  const { channel, userId, studyMinutes, breakMinutes, style } = opts;
 
   if (!channel.isSendable()) {
     return { ok: false, reason: "مش قادر أبعت رسائل في القناة دي." };
@@ -241,6 +258,8 @@ export async function startTimer(opts: {
     message: undefined as unknown as Message,
     interval: undefined as unknown as NodeJS.Timeout,
     lastRepostAt: Date.now(),
+    style,
+    paletteIndex: Math.floor(Math.random() * RANDOM_PALETTE.length),
   };
 
   const remainingSeconds = Math.ceil((phaseEndsAt - Date.now()) / 1000);
