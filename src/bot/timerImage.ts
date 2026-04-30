@@ -25,12 +25,13 @@ function ensureFontRegistered(): void {
       /* try next */
     }
   }
-  // Fall back silently to system sans-serif if font file missing.
   fontRegistered = true;
 }
 
 function formatTime(totalSeconds: number): string {
-  const safe = Math.max(0, Math.floor(totalSeconds));
+  const raw = Math.max(0, Math.floor(totalSeconds));
+  // Snap displayed seconds to multiples of 30 (so seconds field is always 00 or 30).
+  const safe = Math.floor(raw / 30) * 30;
   const minutes = Math.floor(safe / 60);
   const seconds = safe % 60;
   if (minutes >= 60) {

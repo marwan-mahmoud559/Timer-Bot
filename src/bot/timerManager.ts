@@ -13,6 +13,7 @@ import { renderTimerImage } from "./timerImage.js";
 import { logger } from "../lib/logger.js";
 
 const UPDATE_INTERVAL_MS = 30_000;
+const REPOST_INTERVAL_MS = 5 * 60 * 1000; // recreate message every 5 minutes
 
 type Phase = "study" | "break";
 
@@ -26,12 +27,15 @@ interface ActiveTimer {
   phaseEndsAt: number;
   message: Message;
   interval: NodeJS.Timeout;
+  lastRepostAt: number;
 }
 
 const active = new Map<string, ActiveTimer>();
 
 function formatRemaining(seconds: number): string {
-  const safe = Math.max(0, Math.floor(seconds));
+  const raw = Math.max(0, Math.floor(seconds));
+  // Snap displayed seconds to multiples of 30.
+  const safe = Math.floor(raw / 30) * 30;
   const m = Math.floor(safe / 60);
   const s = safe % 60;
   if (m >= 60) {
@@ -44,9 +48,7 @@ function formatRemaining(seconds: number): string {
 
 function buildEmbed(t: ActiveTimer, remainingSeconds: number): APIEmbed {
   const isBreak = t.phase === "break";
-  const title = isBreak
-    ? "☕ وقت البريك"
-    : "📚 Focus Study Session";
+  const title = isBreak ? "☕ وقت البريك" : "📚 Focus Study Session";
   const color = isBreak ? 0x22d3ee : 0xff2bd6;
 
   const description = [
@@ -83,6 +85,33 @@ function buildAttachment(t: ActiveTimer, remainingSeconds: number): AttachmentBu
   return new AttachmentBuilder(buf, { name: "timer.png" });
 }
 
+async function repostMessage(t: ActiveTimer, remainingSeconds: number): Promise<void> {
+  const channel = t.message.channel;
+  if (!channel.isSendable()) return;
+
+  const attachment = buildAttachment(t, remainingSeconds);
+  const embed = buildEmbed(t, remainingSeconds);
+
+  // Send the new message FIRST (so we never end up with no visible timer
+  // if delete succeeds but send fails).
+  const newMessage = await channel.send({
+    embeds: [embed],
+    files: [attachment],
+    components: [buildStopRow()],
+  });
+
+  const oldMessage = t.message;
+  t.message = newMessage;
+  t.lastRepostAt = Date.now();
+
+  // Best-effort delete of the old message.
+  try {
+    await oldMessage.delete();
+  } catch (err) {
+    logger.error({ err }, "Failed to delete previous timer message");
+  }
+}
+
 async function tick(channelId: string): Promise<void> {
   const t = active.get(channelId);
   if (!t) return;
@@ -92,7 +121,6 @@ async function tick(channelId: string): Promise<void> {
 
   if (remainingSeconds <= 0) {
     if (t.phase === "study") {
-      // Move into break phase
       t.phase = "break";
       t.phaseEndsAt = now + t.breakMinutes * 60 * 1000;
       remainingSeconds = Math.ceil((t.phaseEndsAt - now) / 1000);
@@ -107,8 +135,15 @@ async function tick(channelId: string): Promise<void> {
       } catch (err) {
         logger.error({ err }, "Failed to send phase change message");
       }
+
+      // Force a fresh message at phase change.
+      try {
+        await repostMessage(t, remainingSeconds);
+      } catch (err) {
+        logger.error({ err }, "Failed to repost timer at phase change");
+      }
+      return;
     } else {
-      // break finished -> stop timer
       try {
         const channel = t.message.channel;
         if (channel.isSendable()) {
@@ -119,9 +154,19 @@ async function tick(channelId: string): Promise<void> {
       } catch (err) {
         logger.error({ err }, "Failed to send completion message");
       }
-      await stopTimer(channelId, /*silent*/ true);
+      await stopTimer(channelId, true);
       return;
     }
+  }
+
+  const sinceRepost = now - t.lastRepostAt;
+  if (sinceRepost >= REPOST_INTERVAL_MS) {
+    try {
+      await repostMessage(t, remainingSeconds);
+    } catch (err) {
+      logger.error({ err, channelId }, "Failed to repost timer message");
+    }
+    return;
   }
 
   try {
@@ -165,7 +210,8 @@ export async function startTimer(opts: {
   if (active.has(channel.id)) {
     return {
       ok: false,
-      reason: "في تايمر شغال بالفعل في القناة دي. أوقفه الأول بـ `/break` أو زر الإيقاف.",
+      reason:
+        "في تايمر شغال بالفعل في القناة دي. أوقفه الأول بـ `/break` أو زر الإيقاف.",
     };
   }
 
@@ -192,9 +238,9 @@ export async function startTimer(opts: {
     breakMinutes,
     phase: "study",
     phaseEndsAt,
-    // message + interval set right after
     message: undefined as unknown as Message,
     interval: undefined as unknown as NodeJS.Timeout,
+    lastRepostAt: Date.now(),
   };
 
   const remainingSeconds = Math.ceil((phaseEndsAt - Date.now()) / 1000);
@@ -208,6 +254,7 @@ export async function startTimer(opts: {
   });
 
   placeholder.message = message;
+  placeholder.lastRepostAt = Date.now();
   const interval = setInterval(() => {
     void tick(channel.id);
   }, UPDATE_INTERVAL_MS);

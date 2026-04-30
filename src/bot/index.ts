@@ -130,30 +130,20 @@ async function handleInteraction(interaction: Interaction): Promise<void> {
         });
         return;
       }
-      // Respond instantly so the user doesn't see a long "thinking" spinner.
-      await interaction.editReply({
-        content: `✅ بدأ التايمر — مذاكرة **${studyMinutes} دقيقة** ثم بريك **${breakMinutes} دقيقة**.`,
-      });
-
-      // Heavy work (image render + channel.send) runs in the background.
-      startTimer({
+      const result = await startTimer({
         channel,
         userId: interaction.user.id,
         studyMinutes,
         breakMinutes,
-      })
-        .then(async (result) => {
-          if (!result.ok) {
-            try {
-              await interaction.editReply({ content: `❌ ${result.reason}` });
-            } catch {
-              /* noop */
-            }
-          }
-        })
-        .catch((err) => {
-          logger.error({ err }, "startTimer failed");
+      });
+
+      if (result.ok) {
+        await interaction.editReply({
+          content: `✅ بدأ التايمر — مذاكرة **${studyMinutes} دقيقة** ثم بريك **${breakMinutes} دقيقة**.`,
         });
+      } else {
+        await interaction.editReply({ content: `❌ ${result.reason}` });
+      }
       return;
     }
 
@@ -221,13 +211,13 @@ export async function startBot(): Promise<void> {
     logger.info({ user: c.user.tag }, "Discord bot is ready");
 
     const permissions =
-      (1n << 10n) | // VIEW_CHANNEL
-      (1n << 11n) | // SEND_MESSAGES
-      (1n << 14n) | // EMBED_LINKS
-      (1n << 15n) | // ATTACH_FILES
-      (1n << 16n) | // READ_MESSAGE_HISTORY
-      (1n << 18n) | // USE_EXTERNAL_EMOJIS
-      (1n << 31n); // USE_APPLICATION_COMMANDS
+      (1n << 10n) |
+      (1n << 11n) |
+      (1n << 14n) |
+      (1n << 15n) |
+      (1n << 16n) |
+      (1n << 18n) |
+      (1n << 31n);
     const inviteUrl = `https://discord.com/api/oauth2/authorize?client_id=${c.user.id}&permissions=${permissions.toString()}&scope=bot%20applications.commands`;
     logger.info(
       { inviteUrl },
