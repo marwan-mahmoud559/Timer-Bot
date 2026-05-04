@@ -54,7 +54,7 @@ function formatRemaining(seconds: number): string {
 function styleColor(t: ActiveTimer): number {
   if (t.phase === "break") return 0x22d3ee;
   if (t.style === "hellokitty") return 0xff5da8;
-  if (t.style === "kuromi") return 0x7c3aed;
+  if (t.style === "kuromie") return 0x7c3aed;
   // random
   const hex = RANDOM_PALETTE[t.paletteIndex % RANDOM_PALETTE.length]!.accent;
   return parseInt(hex.slice(1), 16);
