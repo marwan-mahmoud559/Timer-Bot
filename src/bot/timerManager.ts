@@ -285,6 +285,7 @@ export async function startTimer(opts: {
 export async function stopTimer(
   channelId: string,
   silent = false,
+  stoppedByUserId?: string,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
   const t = active.get(channelId);
   if (!t) {
@@ -296,6 +297,16 @@ export async function stopTimer(
 
   try {
     const isBreak = t.phase === "break";
+
+    let stopLine: string;
+    if (silent) {
+      stopLine = "✅ الجلسة انتهت بنجاح.";
+    } else if (stoppedByUserId) {
+      stopLine = `🛑 تم إيقاف التايمر بواسطة <@${stoppedByUserId}>`;
+    } else {
+      stopLine = "🛑 تم الإيقاف يدويًا.";
+    }
+
     const finalEmbed = new EmbedBuilder()
       .setTitle(isBreak ? "☕ تم إيقاف البريك" : "⏹ تم إيقاف التايمر")
       .setDescription(
@@ -303,7 +314,7 @@ export async function stopTimer(
           `📖 مدة المذاكرة: **${t.studyMinutes} دقيقة**`,
           `☕ البريك: **${t.breakMinutes} دقيقة**`,
           "",
-          silent ? "✅ الجلسة انتهت بنجاح." : "🛑 تم الإيقاف يدويًا.",
+          stopLine,
         ].join("\n"),
       )
       .setColor(silent ? 0x22c55e : 0xef4444)
