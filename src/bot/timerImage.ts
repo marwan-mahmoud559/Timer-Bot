@@ -74,7 +74,7 @@ export function renderTimerImage(opts: TimerImageOptions): Buffer {
 
   if (opts.style === "hellokitty") {
     renderHelloKitty(ctx, opts);
-  } else if (opts.style === "kuromi") {
+  } else if (opts.style === "kuromie") {
     renderKuromi(ctx, opts);
   } else {
     renderNeon(ctx, opts);
