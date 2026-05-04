@@ -75,7 +75,7 @@ export function renderTimerImage(opts: TimerImageOptions): Buffer {
   if (opts.style === "hellokitty") {
     renderHelloKitty(ctx, opts);
   } else if (opts.style === "kuromie") {
-    renderKuromi(ctx, opts);
+    renderKuromie(ctx, opts);
   } else {
     renderNeon(ctx, opts);
   }
@@ -415,330 +415,351 @@ function drawKittyFace(ctx: SKRSContext2D, x: number, y: number, size: number): 
   ctx.restore();
 }
 
-// ---------------- KUROMI STYLE ----------------
+// ---------------- KUROMIE STYLE (Sakura / Kimono) ----------------
 
-function renderKuromi(ctx: SKRSContext2D, opts: TimerImageOptions): void {
+function renderKuromie(ctx: SKRSContext2D, opts: TimerImageOptions): void {
   const isBreak = opts.phase === "break";
   const cx = WIDTH / 2;
   const cy = HEIGHT / 2;
 
-  // background: soft lavender like the Kuromi Sanrio aesthetic
+  // Soft pink background — like the Kuromi sakura image
   const bg = ctx.createLinearGradient(0, 0, 0, HEIGHT);
-  bg.addColorStop(0, "#dcc6f0");
-  bg.addColorStop(0.5, "#e8d5f5");
-  bg.addColorStop(1, "#cdb4e8");
+  bg.addColorStop(0, "#ffc8de");
+  bg.addColorStop(0.5, "#ffdaea");
+  bg.addColorStop(1, "#ffb8d4");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  // subtle soft pattern - tiny dots
-  drawLavenderDots(ctx);
+  // Large blurry sakura blossoms in background
+  drawSakuraBg(ctx);
 
-  // sparkle stars scattered
-  drawKuromiSparkles(ctx);
+  // Small butterflies / hummingbirds scattered
+  drawButterflies(ctx);
 
-  // decorative border with rounded feel
+  // Decorative border — thin pink
   ctx.save();
-  ctx.strokeStyle = "#7c3aed";
-  ctx.lineWidth = 4;
-  ctx.globalAlpha = 0.5;
-  ctx.strokeRect(10, 10, WIDTH - 20, HEIGHT - 20);
+  ctx.strokeStyle = "#e91e8c";
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = 0.35;
+  ctx.strokeRect(8, 8, WIDTH - 16, HEIGHT - 16);
   ctx.restore();
 
-  // corner mini skulls (pink, matching the image)
-  drawPinkSkull(ctx, 40, 40, 22);
-  drawPinkSkull(ctx, WIDTH - 40, 40, 22);
-  drawPinkSkull(ctx, 40, HEIGHT - 40, 18);
-  drawPinkSkull(ctx, WIDTH - 40, HEIGHT - 40, 18);
+  // Kuromi kimono character on each side
+  drawKuromiKimono(ctx, 95, cy + 8, 72);
+  drawKuromiKimono(ctx, WIDTH - 95, cy + 8, 72);
 
-  // Kuromi full character on sides
-  drawKuromiFull(ctx, 100, cy + 10, 78);
-  drawKuromiFull(ctx, WIDTH - 100, cy + 10, 78);
-
-  // decorative top/bottom bar
+  // Decorative top/bottom bar
   ctx.save();
-  ctx.fillStyle = "#9333ea";
-  ctx.globalAlpha = 0.4;
-  ctx.fillRect(0, 0, WIDTH, 7);
-  ctx.fillRect(0, HEIGHT - 7, WIDTH, 7);
+  ctx.fillStyle = "#e91e8c";
+  ctx.globalAlpha = 0.3;
+  ctx.fillRect(0, 0, WIDTH, 6);
+  ctx.fillRect(0, HEIGHT - 6, WIDTH, 6);
   ctx.restore();
 
-  // Header - cute dark purple text
+  // Header
   ctx.save();
-  ctx.fillStyle = "#4a1272";
+  ctx.fillStyle = "#7b003c";
   ctx.font = `bold 26px "${FONT_FAMILY}", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("✦ Kuromi Timer ✦", cx, 42);
+  ctx.fillText("✿ Kuromie Timer ✿", cx, 42);
   ctx.restore();
 
-  // Time text - dark purple on lavender
+  // Time text — dark on pink
   const timeText = formatTime(opts.remainingSeconds);
   ctx.save();
   // soft drop shadow
-  ctx.fillStyle = "#b890d8";
+  ctx.fillStyle = "#f090b8";
   ctx.font = `bold 128px "${FONT_FAMILY}", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(timeText, cx + 4, cy + 14);
-  // main color: deep purple
-  ctx.fillStyle = "#3b0764";
+  // main color: deep dark pink / almost black
+  ctx.fillStyle = "#1a0010";
   ctx.fillText(timeText, cx, cy + 10);
-  // slight highlight
-  ctx.fillStyle = "#7c3aed";
-  ctx.globalAlpha = 0.25;
-  ctx.fillText(timeText, cx - 2, cy + 6);
+  // hot pink highlight
+  ctx.fillStyle = "#e91e8c";
+  ctx.globalAlpha = 0.2;
+  ctx.fillText(timeText, cx - 2, cy + 7);
   ctx.restore();
 
   // Phase label
   ctx.save();
-  ctx.fillStyle = "#5b2188";
+  ctx.fillStyle = "#7b003c";
   ctx.font = `bold 22px "${FONT_FAMILY}", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(
-    isBreak ? "✦ BREAK TIME ✦" : "✦ FOCUS TIME ✦",
+    isBreak ? "✿ BREAK TIME ✿" : "✿ FOCUS TIME ✿",
     cx,
     HEIGHT - 30,
   );
   ctx.restore();
 }
 
-function drawLavenderDots(ctx: SKRSContext2D): void {
-  const dots = [
-    { x: 25, y: 25 }, { x: 180, y: 18 }, { x: 400, y: 22 },
-    { x: 620, y: 15 }, { x: 775, y: 30 }, { x: 20, y: 180 },
-    { x: 778, y: 195 }, { x: 22, y: 325 }, { x: 780, y: 318 },
-    { x: 340, y: 342 }, { x: 510, y: 348 }, { x: 155, y: 348 }, { x: 660, y: 340 },
+function drawSakuraBg(ctx: SKRSContext2D): void {
+  const blossoms = [
+    { x: 55,  y: 55,  r: 32, a: 0.22 },
+    { x: 740, y: 45,  r: 28, a: 0.18 },
+    { x: 30,  y: 295, r: 26, a: 0.2  },
+    { x: 760, y: 300, r: 30, a: 0.18 },
+    { x: 390, y: 330, r: 22, a: 0.15 },
+    { x: 200, y: 30,  r: 20, a: 0.16 },
+    { x: 600, y: 320, r: 24, a: 0.16 },
   ];
+  for (const b of blossoms) {
+    drawSakuraFlower(ctx, b.x, b.y, b.r, b.a);
+  }
+  // small scattered petals
+  const petals = [
+    { x: 140, y: 280, r: 10, a: 0.3 },
+    { x: 320, y: 50,  r: 12, a: 0.28 },
+    { x: 480, y: 30,  r: 9,  a: 0.25 },
+    { x: 660, y: 140, r: 11, a: 0.28 },
+    { x: 180, y: 140, r: 8,  a: 0.25 },
+    { x: 580, y: 200, r: 10, a: 0.22 },
+    { x: 430, y: 300, r: 9,  a: 0.25 },
+  ];
+  for (const p of petals) {
+    drawSakuraFlower(ctx, p.x, p.y, p.r, p.a);
+  }
+}
+
+function drawSakuraFlower(ctx: SKRSContext2D, x: number, y: number, r: number, alpha: number): void {
   ctx.save();
-  ctx.globalAlpha = 0.18;
-  ctx.fillStyle = "#7c3aed";
-  for (const d of dots) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = "#ff85b3";
+  for (let i = 0; i < 5; i++) {
+    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+    const px = x + Math.cos(angle) * r * 0.55;
+    const py = y + Math.sin(angle) * r * 0.55;
     ctx.beginPath();
-    ctx.arc(d.x, d.y, 5, 0, Math.PI * 2);
+    ctx.ellipse(px, py, r * 0.52, r * 0.35, angle, 0, Math.PI * 2);
     ctx.fill();
   }
+  // center
+  ctx.fillStyle = "#ffcce0";
+  ctx.globalAlpha = alpha * 1.2;
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.28, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }
 
-function drawKuromiSparkles(ctx: SKRSContext2D): void {
-  const sparkles = [
-    { x: 210, y: 80, s: 11, a: 0.8 },
-    { x: 590, y: 75, s: 13, a: 0.9 },
-    { x: 260, y: 295, s: 9, a: 0.7 },
-    { x: 540, y: 288, s: 10, a: 0.8 },
-    { x: 170, y: 165, s: 7, a: 0.6 },
-    { x: 635, y: 200, s: 8, a: 0.65 },
-    { x: 390, y: 310, s: 7, a: 0.6 },
+function drawButterflies(ctx: SKRSContext2D): void {
+  const items = [
+    { x: 230, y: 70,  s: 14, c: "#b39ddb", a: 0.75 },
+    { x: 555, y: 60,  s: 12, c: "#90caf9", a: 0.7  },
+    { x: 160, y: 220, s: 11, c: "#f48fb1", a: 0.65 },
+    { x: 640, y: 230, s: 13, c: "#ce93d8", a: 0.7  },
+    { x: 340, y: 310, s: 10, c: "#80deea", a: 0.6  },
+    { x: 510, y: 290, s: 11, c: "#b39ddb", a: 0.65 },
   ];
-  ctx.save();
-  for (const sp of sparkles) {
-    ctx.globalAlpha = sp.a;
-    ctx.fillStyle = "#ffffff";
-    drawSparkle4(ctx, sp.x, sp.y, sp.s);
+  for (const b of items) {
+    drawButterfly(ctx, b.x, b.y, b.s, b.c, b.a);
   }
+}
+
+function drawButterfly(ctx: SKRSContext2D, x: number, y: number, size: number, color: string, alpha: number): void {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  // upper wings
+  ctx.beginPath();
+  ctx.ellipse(-size * 0.55, -size * 0.35, size * 0.5, size * 0.32, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(size * 0.55, -size * 0.35, size * 0.5, size * 0.32, 0.5, 0, Math.PI * 2);
+  ctx.fill();
+  // lower wings (smaller)
+  ctx.globalAlpha = alpha * 0.75;
+  ctx.beginPath();
+  ctx.ellipse(-size * 0.4, size * 0.2, size * 0.32, size * 0.2, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(size * 0.4, size * 0.2, size * 0.32, size * 0.2, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  // body
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = "#111111";
+  ctx.beginPath();
+  ctx.ellipse(0, 0, size * 0.08, size * 0.42, 0, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }
 
-function drawSparkle4(ctx: SKRSContext2D, x: number, y: number, size: number): void {
+function drawKuromiKimono(ctx: SKRSContext2D, x: number, y: number, size: number): void {
+  ctx.save();
+  ctx.translate(x, y);
+
+  // Kimono body — black with pink flower pattern
+  // skirt/kimono lower part
+  ctx.fillStyle = "#111111";
   ctx.beginPath();
-  for (let i = 0; i < 4; i++) {
-    const angle = (Math.PI / 2) * i;
-    const ox = x + Math.cos(angle) * size;
-    const oy = y + Math.sin(angle) * size;
-    const ia = angle + Math.PI / 4;
-    const ix = x + Math.cos(ia) * size * 0.35;
-    const iy = y + Math.sin(ia) * size * 0.35;
-    if (i === 0) ctx.moveTo(ox, oy);
-    else ctx.lineTo(ox, oy);
-    ctx.lineTo(ix, iy);
+  ctx.moveTo(-size * 0.55, size * 0.38);
+  ctx.lineTo(-size * 0.68, size * 1.28);
+  ctx.lineTo(size * 0.68, size * 1.28);
+  ctx.lineTo(size * 0.55, size * 0.38);
+  ctx.closePath();
+  ctx.fill();
+
+  // Pink flower dots on kimono (like in the image)
+  const flowerPositions = [
+    { fx: -size * 0.3, fy: size * 0.65, fr: size * 0.09 },
+    { fx: size * 0.28, fy: size * 0.7,  fr: size * 0.08 },
+    { fx: -size * 0.1, fy: size * 0.95, fr: size * 0.09 },
+    { fx: size * 0.38, fy: size * 1.0,  fr: size * 0.08 },
+    { fx: -size * 0.42, fy: size * 1.05, fr: size * 0.07 },
+    { fx: size * 0.08, fy: size * 1.18, fr: size * 0.08 },
+    { fx: -size * 0.22, fy: size * 1.18, fr: size * 0.07 },
+  ];
+  for (const f of flowerPositions) {
+    drawTinyFlower(ctx, f.fx, f.fy, f.fr);
   }
-  ctx.closePath();
-  ctx.fill();
-}
 
-function drawPinkSkull(ctx: SKRSContext2D, x: number, y: number, size: number): void {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.globalAlpha = 0.75;
-
-  // skull head - hot pink like Kuromi's skull accessory
-  ctx.fillStyle = "#ff5da8";
+  // kimono obi (belt) — thin white/pink band
+  ctx.fillStyle = "#ffc0d8";
   ctx.beginPath();
-  ctx.ellipse(0, -size * 0.08, size * 0.52, size * 0.48, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // jaw
-  ctx.beginPath();
-  ctx.ellipse(0, size * 0.28, size * 0.34, size * 0.2, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // eyes
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.ellipse(-size * 0.18, -size * 0.1, size * 0.12, size * 0.14, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(size * 0.18, -size * 0.1, size * 0.12, size * 0.14, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // nose
-  ctx.fillStyle = "#e0408a";
-  ctx.beginPath();
-  ctx.ellipse(0, size * 0.1, size * 0.06, size * 0.07, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // teeth gap
-  ctx.fillStyle = "#e0408a";
-  ctx.beginPath();
-  ctx.rect(-size * 0.08, size * 0.2, size * 0.16, size * 0.14);
+  ctx.rect(-size * 0.52, size * 0.4, size * 1.04, size * 0.14);
   ctx.fill();
 
-  ctx.restore();
-}
-
-function drawKuromiFull(ctx: SKRSContext2D, x: number, y: number, size: number): void {
-  ctx.save();
-  ctx.translate(x, y);
-
-  // maid dress body (black with white frills)
-  // skirt
+  // torso
   ctx.fillStyle = "#111111";
   ctx.beginPath();
-  ctx.moveTo(-size * 0.6, size * 0.55);
-  ctx.lineTo(-size * 0.75, size * 1.35);
-  ctx.lineTo(size * 0.75, size * 1.35);
-  ctx.lineTo(size * 0.6, size * 0.55);
-  ctx.closePath();
+  ctx.ellipse(0, size * 0.28, size * 0.44, size * 0.28, 0, 0, Math.PI * 2);
   ctx.fill();
-  // white frilly bottom of skirt
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.moveTo(-size * 0.75, size * 1.35);
-  ctx.bezierCurveTo(-size * 0.6, size * 1.2, -size * 0.3, size * 1.45, 0, size * 1.3);
-  ctx.bezierCurveTo(size * 0.3, size * 1.45, size * 0.6, size * 1.2, size * 0.75, size * 1.35);
-  ctx.lineTo(size * 0.75, size * 1.42);
-  ctx.bezierCurveTo(size * 0.6, size * 1.28, size * 0.3, size * 1.52, 0, size * 1.37);
-  ctx.bezierCurveTo(-size * 0.3, size * 1.52, -size * 0.6, size * 1.28, -size * 0.75, size * 1.42);
-  ctx.closePath();
-  ctx.fill();
-
-  // torso/apron
-  ctx.fillStyle = "#111111";
-  ctx.beginPath();
-  ctx.ellipse(0, size * 0.42, size * 0.48, size * 0.32, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // white apron
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.ellipse(0, size * 0.44, size * 0.22, size * 0.26, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // apron bow
-  drawKuromiBow(ctx, 0, size * 0.18, size * 0.28);
 
   // arms
   ctx.fillStyle = "#111111";
   ctx.beginPath();
-  ctx.ellipse(-size * 0.58, size * 0.55, size * 0.12, size * 0.32, -0.3, 0, Math.PI * 2);
+  ctx.ellipse(-size * 0.52, size * 0.38, size * 0.14, size * 0.28, -0.25, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.ellipse(size * 0.58, size * 0.55, size * 0.12, size * 0.32, 0.3, 0, Math.PI * 2);
-  ctx.fill();
-  // white cuffs
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.ellipse(-size * 0.64, size * 0.82, size * 0.12, size * 0.09, -0.3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(size * 0.64, size * 0.82, size * 0.12, size * 0.09, 0.3, 0, Math.PI * 2);
+  ctx.ellipse(size * 0.52, size * 0.38, size * 0.14, size * 0.28, 0.25, 0, Math.PI * 2);
   ctx.fill();
 
-  // legs / feet
-  ctx.fillStyle = "#333333";
-  ctx.beginPath();
-  ctx.ellipse(-size * 0.28, size * 1.5, size * 0.14, size * 0.1, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(size * 0.28, size * 1.5, size * 0.14, size * 0.1, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // BLACK HOOD
+  // BLACK HOOD (Kuromi's signature)
   ctx.fillStyle = "#0d0010";
-  ctx.strokeStyle = "#3b1060";
+  ctx.strokeStyle = "#3b003c";
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(-size * 0.88, size * 0.08);
-  ctx.bezierCurveTo(-size * 0.95, -size * 0.55, -size * 0.28, -size * 1.3, 0, -size * 1.38);
-  ctx.bezierCurveTo(size * 0.28, -size * 1.3, size * 0.95, -size * 0.55, size * 0.88, size * 0.08);
+  ctx.moveTo(-size * 0.85, size * 0.06);
+  ctx.bezierCurveTo(-size * 0.92, -size * 0.52, -size * 0.26, -size * 1.28, 0, -size * 1.35);
+  ctx.bezierCurveTo(size * 0.26, -size * 1.28, size * 0.92, -size * 0.52, size * 0.85, size * 0.06);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
   // pink skull on hood
-  ctx.save();
-  ctx.translate(0, -size * 0.72);
-  drawPinkSkull(ctx, 0, 0, size * 0.3);
-  ctx.restore();
-
-  // white maid headband on hood
-  ctx.fillStyle = "#ffffff";
-  ctx.globalAlpha = 0.9;
-  ctx.beginPath();
-  ctx.moveTo(-size * 0.72, -size * 0.12);
-  ctx.bezierCurveTo(-size * 0.62, -size * 0.25, size * 0.62, -size * 0.25, size * 0.72, -size * 0.12);
-  ctx.lineWidth = size * 0.1;
-  ctx.strokeStyle = "#ffffff";
-  ctx.stroke();
-  ctx.globalAlpha = 1;
+  drawPinkSkullSmall(ctx, 0, -size * 0.7, size * 0.28);
 
   // WHITE FACE
   ctx.fillStyle = "#ffffff";
-  ctx.strokeStyle = "#ddb8f0";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#ffb3cc";
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.ellipse(0, size * 0.08, size * 0.62, size * 0.56, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, size * 0.06, size * 0.6, size * 0.54, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // big cute eyes
+  // eye patch (left eye - Kuromi has an eye patch!)
+  ctx.fillStyle = "#111111";
+  ctx.beginPath();
+  ctx.ellipse(-size * 0.22, size * 0.04, size * 0.14, size * 0.1, -0.15, 0, Math.PI * 2);
+  ctx.fill();
+  // patch string
+  ctx.strokeStyle = "#111111";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.08, size * 0.04);
+  ctx.lineTo(size * 0.06, size * 0.04);
+  ctx.stroke();
+
+  // right eye — winking / cute oval
   ctx.fillStyle = "#1a0028";
   ctx.beginPath();
-  ctx.ellipse(-size * 0.22, size * 0.06, size * 0.1, size * 0.155, -0.08, 0, Math.PI * 2);
+  ctx.ellipse(size * 0.24, size * 0.05, size * 0.1, size * 0.145, 0.08, 0, Math.PI * 2);
   ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(size * 0.22, size * 0.06, size * 0.1, size * 0.155, 0.08, 0, Math.PI * 2);
-  ctx.fill();
-  // eye shine
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.ellipse(-size * 0.18, size * 0.02, size * 0.03, size * 0.045, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(size * 0.26, size * 0.02, size * 0.03, size * 0.045, 0, 0, Math.PI * 2);
+  ctx.ellipse(size * 0.28, size * 0.01, size * 0.028, size * 0.04, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // rosy cheeks (soft purple/pink)
+  // rosy cheeks
   ctx.save();
-  ctx.globalAlpha = 0.3;
-  ctx.fillStyle = "#d946a8";
+  ctx.globalAlpha = 0.28;
+  ctx.fillStyle = "#ff69b4";
   ctx.beginPath();
-  ctx.ellipse(-size * 0.38, size * 0.2, size * 0.13, size * 0.08, 0, 0, Math.PI * 2);
+  ctx.ellipse(-size * 0.36, size * 0.2, size * 0.13, size * 0.08, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
   ctx.ellipse(size * 0.38, size * 0.2, size * 0.13, size * 0.08, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // small smile
+  // small smirk
   ctx.strokeStyle = "#1a0028";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.arc(0, size * 0.24, size * 0.13, 0.25, Math.PI - 0.25);
+  ctx.arc(size * 0.06, size * 0.26, size * 0.1, 0.3, Math.PI - 0.3);
   ctx.stroke();
 
-  // purple bow on left of hood (Kuromi's signature bow)
-  drawKuromiBow(ctx, -size * 0.58, -size * 0.1, size * 0.44);
+  // purple bow on left side of hood
+  drawKuromieBow(ctx, -size * 0.56, -size * 0.08, size * 0.42);
 
   ctx.restore();
 }
 
-function drawKuromiBow(ctx: SKRSContext2D, x: number, y: number, size: number): void {
+function drawTinyFlower(ctx: SKRSContext2D, x: number, y: number, r: number): void {
+  ctx.save();
+  ctx.fillStyle = "#ff85b3";
+  ctx.globalAlpha = 0.85;
+  for (let i = 0; i < 5; i++) {
+    const angle = (Math.PI * 2 / 5) * i;
+    const px = x + Math.cos(angle) * r * 0.65;
+    const py = y + Math.sin(angle) * r * 0.65;
+    ctx.beginPath();
+    ctx.ellipse(px, py, r * 0.42, r * 0.3, angle, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = "#ffffff";
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPinkSkullSmall(ctx: SKRSContext2D, x: number, y: number, size: number): void {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = "#ff5da8";
+  ctx.beginPath();
+  ctx.ellipse(0, -size * 0.08, size * 0.5, size * 0.46, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(0, size * 0.26, size * 0.32, size * 0.19, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.ellipse(-size * 0.17, -size * 0.1, size * 0.11, size * 0.13, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(size * 0.17, -size * 0.1, size * 0.11, size * 0.13, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#e0408a";
+  ctx.beginPath();
+  ctx.ellipse(0, size * 0.1, size * 0.055, size * 0.065, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.rect(-size * 0.07, size * 0.19, size * 0.14, size * 0.13);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawKuromieBow(ctx: SKRSContext2D, x: number, y: number, size: number): void {
   ctx.save();
   ctx.translate(x, y);
   ctx.fillStyle = "#7c3aed";
