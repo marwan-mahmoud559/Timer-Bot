@@ -29,7 +29,7 @@ const OPT_STYLE = "style";
 const STYLE_CHOICES = [
   { name: "Random colors (default)", value: "random" },
   { name: "Hello Kitty 🎀", value: "hellokitty" },
-  { name: "Kuromie 🖤🌸", value: "kuromie" },
+  { name: "Girl Style 🌸", value: "kuromie" },
 ] as const;
 
 type StyleValue = (typeof STYLE_CHOICES)[number]["value"];

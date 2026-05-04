@@ -444,10 +444,6 @@ function renderKuromie(ctx: SKRSContext2D, opts: TimerImageOptions): void {
   ctx.strokeRect(8, 8, WIDTH - 16, HEIGHT - 16);
   ctx.restore();
 
-  // Kuromi kimono character on each side
-  drawKuromiKimono(ctx, 95, cy + 8, 72);
-  drawKuromiKimono(ctx, WIDTH - 95, cy + 8, 72);
-
   // Decorative top/bottom bar
   ctx.save();
   ctx.fillStyle = "#e91e8c";
@@ -462,7 +458,7 @@ function renderKuromie(ctx: SKRSContext2D, opts: TimerImageOptions): void {
   ctx.font = `bold 26px "${FONT_FAMILY}", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("✿ Kuromie Timer ✿", cx, 42);
+  ctx.fillText("✿ Girl Style Timer ✿", cx, 42);
   ctx.restore();
 
   // Time text — dark on pink
