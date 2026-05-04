@@ -29,13 +29,13 @@ const OPT_STYLE = "style";
 const STYLE_CHOICES = [
   { name: "Random colors (default)", value: "random" },
   { name: "Hello Kitty 🎀", value: "hellokitty" },
-  { name: "Chromie ⚙ (chrome)", value: "chromie" },
+  { name: "Kuromi 🖤", value: "kuromi" },
 ] as const;
 
 type StyleValue = (typeof STYLE_CHOICES)[number]["value"];
 
 function isStyleValue(v: string | null): v is StyleValue {
-  return v === "random" || v === "hellokitty" || v === "chromie";
+  return v === "random" || v === "hellokitty" || v === "kuromi";
 }
 
 function buildCommands() {

@@ -54,7 +54,7 @@ function formatRemaining(seconds: number): string {
 function styleColor(t: ActiveTimer): number {
   if (t.phase === "break") return 0x22d3ee;
   if (t.style === "hellokitty") return 0xff5da8;
-  if (t.style === "chromie") return 0x9aa4b2;
+  if (t.style === "kuromi") return 0x7c3aed;
   // random
   const hex = RANDOM_PALETTE[t.paletteIndex % RANDOM_PALETTE.length]!.accent;
   return parseInt(hex.slice(1), 16);
@@ -104,7 +104,6 @@ async function repostMessage(t: ActiveTimer, remainingSeconds: number): Promise<
   const channel = t.message.channel;
   if (!channel.isSendable()) return;
 
-  // Rotate palette for "random" style on each repost so colors keep changing.
   if (t.style === "random") {
     t.paletteIndex = (t.paletteIndex + 1) % RANDOM_PALETTE.length;
   }
