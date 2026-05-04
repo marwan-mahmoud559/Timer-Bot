@@ -41,7 +41,7 @@ function formatTime(totalSeconds: number): string {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-export type TimerStyle = "random" | "hellokitty" | "kuromi";
+export type TimerStyle = "random" | "hellokitty" | "kuromie";
 
 export interface ColorPair {
   accent: string;
